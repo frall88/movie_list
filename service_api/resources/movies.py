@@ -4,7 +4,11 @@ from typing import List, Dict
 from sanic.response import json
 
 from service_api.app import app
+from service_api.config import Config
 from service_api.resources import BaseView
+from aiocache import cached
+from aiocache.serializers import PickleSerializer
+
 
 logger = logging.getLogger(__name__)
 
@@ -13,6 +17,7 @@ class MoviesView(BaseView):
     def __init__(self):
         self.host = app.config.MOVIE_HOST
 
+    @cached(ttl=Config.CACHE_DEFAULT_TIMEOUT, key="movies", serializer=PickleSerializer())
     async def get(self, request):
         movies = await self._get_entity("films")
         people = await self._get_entity("people")
