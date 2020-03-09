@@ -3,8 +3,9 @@ import logging
 import sys
 
 from service_api.app import app
+from service_api.logger import init_logging
 
-
+init_logging(config=app.config)
 logger = logging.getLogger(__name__)
 
 

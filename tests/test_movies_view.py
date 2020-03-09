@@ -31,7 +31,7 @@ EXPECTED_MOVIES_WITH_PEOPLE = [
             {"id": "2", "name": "John", "films": ["https://some-domain/films/2"]},
         ],
     },
-    {"id": "3", "title": "Grave of the Fireflies", "people": [],},
+    {"id": "3", "title": "Grave of the Fireflies", "people": [], },
 ]
 
 
@@ -40,8 +40,25 @@ class TestMoviesView(BaseTestCase):
         actual_movies_with_people = MoviesView._enrich_movies_by_people(MOVIES, PEOPLE)
         self.assertListEqual(EXPECTED_MOVIES_WITH_PEOPLE, actual_movies_with_people)
 
-    @patch("service_api.resources.BaseView.get_request", side_effect=iter([MOVIES, PEOPLE]))
+    @patch("service_api.resources.BaseView.make_get_request", side_effect=iter([MOVIES, PEOPLE]))
     def test_get(self, mock):
         _, response = self.app.test_client.get("/movies")
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertListEqual(EXPECTED_MOVIES_WITH_PEOPLE, response.json)
+
+    def test_caching_get(self):
+        with patch(
+            "service_api.resources.BaseView.make_get_request", side_effect=iter([MOVIES, PEOPLE])
+        ) as request_mock:
+            _, response = self.app.test_client.get("/movies")
+            self.assertEqual(response.status_code, HTTPStatus.OK)
+            self.assertListEqual(EXPECTED_MOVIES_WITH_PEOPLE, response.json)
+            request_mock.assert_called()
+
+        with patch(
+            "service_api.resources.BaseView.make_get_request", side_effect=iter([MOVIES, PEOPLE])
+        ) as request_mock:
+            _, response = self.app.test_client.get("/movies")
+            self.assertEqual(response.status_code, HTTPStatus.OK)
+            self.assertListEqual(EXPECTED_MOVIES_WITH_PEOPLE, response.json)
+            request_mock.assert_not_called()
